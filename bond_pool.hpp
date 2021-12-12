@@ -43,3 +43,29 @@ private:
   std::list<std::function<void()>> functions_stack;
   std::mutex mutex;
 };
+
+class thread_pool {
+
+public:
+  thread_pool(const std::size_t threads_number = 1) : workers{threads_number} {
+    for (auto &w : workers) {
+      w.start();
+    }
+  }
+  auto start(std::function<void()> func) {
+    if (auto worker = get_least_worker(); worker != workers.end()) {
+      worker->assign(func);
+    }
+  }
+
+private:
+  auto get_least_worker() -> std::list<worker>::iterator {
+    return std::min_element(
+        std::begin(workers), std::end(workers),
+        [](worker &w1, worker &w2) { return w1.work_load() < w2.work_load(); });
+  }
+
+private:
+  std::list<worker> workers;
+};
+}; // namespace bond::threads
